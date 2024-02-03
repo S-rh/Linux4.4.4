@@ -1376,14 +1376,21 @@ struct tlbflush_unmap_batch {
 	bool writable;
 };
 
+// 进程描述符
 struct task_struct {
+	// 进程状态 -1 就绪态 0 运行态  >0 停止态
 	volatile long state;	/* -1 unrunnable, 0 runnable, >0 stopped */
+	// 指向内核栈的指针
 	void *stack;
+	// 有几个进程在使用此结构
 	atomic_t usage;
+	// 标记
 	unsigned int flags;	/* per process flags, defined below */
+	// ptrace系统调用，实现断点调试，跟踪进程运行
 	unsigned int ptrace;
 
-#ifdef CONFIG_SMP
+// 多处理器编译用到
+#ifdef CONFIG_SMP 
 	struct llist_node wake_entry;
 	int on_cpu;
 	unsigned int wakee_flips;
@@ -1392,14 +1399,18 @@ struct task_struct {
 
 	int wake_cpu;
 #endif
+// 运行队列和进程调度相关信息
 	int on_rq;
-
+	// 关于进程调度
 	int prio, static_prio, normal_prio;
+	// 优先级
 	unsigned int rt_priority;
+	// 关于进程
 	const struct sched_class *sched_class;
 	struct sched_entity se;
 	struct sched_rt_entity rt;
 #ifdef CONFIG_CGROUP_SCHED
+	// 结构体链表
 	struct task_group *sched_task_group;
 #endif
 	struct sched_dl_entity dl;
@@ -1410,13 +1421,16 @@ struct task_struct {
 #endif
 
 #ifdef CONFIG_BLK_DEV_IO_TRACE
+	// 块设备 I/0 层的跟踪工具
 	unsigned int btrace_seq;
 #endif
 
+	// 进程调度策略相关的字段
 	unsigned int policy;
 	int nr_cpus_allowed;
 	cpumask_t cpus_allowed;
 
+// RCU同步原语
 #ifdef CONFIG_PREEMPT_RCU
 	int rcu_read_lock_nesting;
 	union rcu_special rcu_read_unlock_special;
@@ -1434,12 +1448,14 @@ struct task_struct {
 	struct sched_info sched_info;
 #endif
 
+	// 进程架构链表
 	struct list_head tasks;
 #ifdef CONFIG_SMP
 	struct plist_node pushable_tasks;
 	struct rb_node pushable_dl_tasks;
 #endif
 
+	// 进程管理的地址空间，每个进程由独立的地址空间
 	struct mm_struct *mm, *active_mm;
 	/* per-thread vma caching */
 	u32 vmacache_seqnum;
@@ -1447,9 +1463,11 @@ struct task_struct {
 #if defined(SPLIT_RSS_COUNTING)
 	struct task_rss_stat	rss_stat;
 #endif
+// 进程状态参数
 /* task state */
 	int exit_state;
 	int exit_code, exit_signal;
+	// 接收父进程终止时就会发出信号
 	int pdeath_signal;  /*  The signal sent when the parent dies  */
 	unsigned long jobctl;	/* JOBCTL_*, siglock protected */
 
@@ -1479,10 +1497,12 @@ struct task_struct {
 
 	struct restart_block restart_block;
 
+	// 进程的pid，父进程tgid
 	pid_t pid;
 	pid_t tgid;
 
 #ifdef CONFIG_CC_STACKPROTECTOR
+	// 防止内核堆栈溢出
 	/* Canary value for the -fstack-protector gcc feature */
 	unsigned long stack_canary;
 #endif
@@ -1491,13 +1511,18 @@ struct task_struct {
 	 * older sibling, respectively.  (p->father can be replaced with
 	 * p->real_parent->pid)
 	 */
+	// 初始化对应的父进程
 	struct task_struct __rcu *real_parent; /* real parent process */
+	// 接收终止进程
 	struct task_struct __rcu *parent; /* recipient of SIGCHLD, wait4() reports */
 	/*
 	 * children/sibling forms the list of my natural children
 	 */
+	// 维护子进程链表
 	struct list_head children;	/* list of my children */
+	// 维护兄弟进程链表
 	struct list_head sibling;	/* linkage in my parent's children list */
+	// 线程组组长
 	struct task_struct *group_leader;	/* threadgroup leader */
 
 	/*
@@ -1505,18 +1530,24 @@ struct task_struct {
 	 * This includes both natural children and PTRACE_ATTACH targets.
 	 * p->ptrace_entry is p's link on the p->parent->ptraced list.
 	 */
+	// 系统调用，关于断点调试
 	struct list_head ptraced;
 	struct list_head ptrace_entry;
 
+	// PID/PID散列表的关联
 	/* PID/PID hash table linkage. */
 	struct pid_link pids[PIDTYPE_MAX];
 	struct list_head thread_group;
 	struct list_head thread_node;
 
+	// do_fock()函数
 	struct completion *vfork_done;		/* for vfork() */
 	int __user *set_child_tid;		/* CLONE_CHILD_SETTID */
 	int __user *clear_child_tid;		/* CLONE_CHILD_CLEARTID */
 
+	// 描述CPU时间的内容
+	// utime：用户态下的执行时间
+	// stime：内核态下的执行时间
 	cputime_t utime, stime, utimescaled, stimescaled;
 	cputime_t gtime;
 	struct prev_cputime prev_cputime;
@@ -1548,9 +1579,11 @@ struct task_struct {
 				       it with task_lock())
 				     - initialized normally by setup_new_exec */
 /* file system info */
+// 文件系统信息
 	struct nameidata *nameidata;
 #ifdef CONFIG_SYSVIPC
 /* ipc stuff */
+// 进程间通信的 stuff
 	struct sysv_sem sysvsem;
 	struct sysv_shm sysvshm;
 #endif
@@ -1584,6 +1617,7 @@ struct task_struct {
 #endif
 	struct seccomp seccomp;
 
+// 线程组
 /* Thread group tracking */
    	u32 parent_exec_id;
    	u32 self_exec_id;
@@ -1633,9 +1667,11 @@ struct task_struct {
 #endif
 
 /* journalling filesystem info */
+// 日志文件系统信息
 	void *journal_info;
 
 /* stacked block device info */
+// 块设备链表
 	struct bio_list *bio_list;
 
 #ifdef CONFIG_BLOCK
@@ -1643,15 +1679,20 @@ struct task_struct {
 	struct blk_plug *plug;
 #endif
 
+// 虚拟内存状态参数
 /* VM state */
+	// 虚拟内存的状态
 	struct reclaim_state *reclaim_state;
 
+	// 存放块设备的I/O流量信息
 	struct backing_dev_info *backing_dev_info;
 
+	// I/O调度器所用的信息 上下文
 	struct io_context *io_context;
 
 	unsigned long ptrace_message;
 	siginfo_t *last_siginfo; /* For ptrace use.  */
+	// 记录进程的I/O计数
 	struct task_io_accounting ioac;
 #if defined(CONFIG_TASK_XACCT)
 	u64 acct_rss_mem1;	/* accumulated rss usage */
@@ -1670,6 +1711,7 @@ struct task_struct {
 	/* cg_list protected by css_set_lock and tsk->alloc_lock */
 	struct list_head cg_list;
 #endif
+// futex同步机制
 #ifdef CONFIG_FUTEX
 	struct robust_list_head __user *robust_list;
 #ifdef CONFIG_COMPAT
@@ -1678,6 +1720,7 @@ struct task_struct {
 	struct list_head pi_state_list;
 	struct futex_pi_state *pi_state_cache;
 #endif
+// 内存检测工具 perfromance event 
 #ifdef CONFIG_PERF_EVENTS
 	struct perf_event_context *perf_event_ctxp[perf_nr_task_contexts];
 	struct mutex perf_event_mutex;
@@ -1737,16 +1780,19 @@ struct task_struct {
 	struct tlbflush_unmap_batch tlb_ubc;
 #endif
 
+	// rcu对应的链表
 	struct rcu_head rcu;
 
 	/*
 	 * cache last used pipe for splice
 	 */
+	// 管道
 	struct pipe_inode_info *splice_pipe;
 
 	struct page_frag task_frag;
 
 #ifdef	CONFIG_TASK_DELAY_ACCT
+	// 延时计数
 	struct task_delay_info *delays;
 #endif
 #ifdef CONFIG_FAULT_INJECTION
