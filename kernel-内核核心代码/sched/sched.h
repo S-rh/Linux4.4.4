@@ -1170,13 +1170,21 @@ static const u32 prio_to_wmult[40] = {
 #define RETRY_TASK		((void *)-1UL)
 
 struct sched_class {
+	/* 当系统中有多个调度类，按照调度优先级排成一个链表，下一优先级的调度类 */
 	const struct sched_class *next;
 
+	/* 将进程加入到执行队列当中，即将调度实体（进程）存放到红黑树中，并对nr_running变量自动加1 */
+	/* 向就绪队列添加一个进程，某个任务进入可运行状态时，该函数将会调用，它将调度实体放入到红黑树当中 */
 	void (*enqueue_task) (struct rq *rq, struct task_struct *p, int flags);
+	/* 从执行队列当中删除进程，并对nr_running变量自动减1 */
+	/* 将一个进程从就绪队列中进行删除，当某个任务退出可运行状态时调用该函数，它将从红黑树中去掉对应的调度实体 */
 	void (*dequeue_task) (struct rq *rq, struct task_struct *p, int flags);
+	/* 放弃CPU执行权，该函数执行先出队后入队，在这种情况下，它直接将调度实体放到红黑树的最右端 */
+	/* 在进程想要资源放弃对处理器的控制权时，可使用在sched_yiled系统调用，其会调用内核API去处理操作 */
 	void (*yield_task) (struct rq *rq);
 	bool (*yield_to_task) (struct rq *rq, struct task_struct *p, bool preempt);
 
+	/* 用于检查当前进程是否可被新进程抢占 */
 	void (*check_preempt_curr) (struct rq *rq, struct task_struct *p, int flags);
 
 	/*
@@ -1187,27 +1195,41 @@ struct sched_class {
 	 * May return RETRY_TASK when it finds a higher prio class has runnable
 	 * tasks.
 	 */
+	/* 选择下一个要运行的进程 */
 	struct task_struct * (*pick_next_task) (struct rq *rq,
-						struct task_struct *prev);
+						struct task_struct *prev);、
+	/* 将进程放回到运行队列当中 */
+	/* 用于另一个进程代替当前运行的进程 */
 	void (*put_prev_task) (struct rq *rq, struct task_struct *p);
 
 #ifdef CONFIG_SMP
+	/* 为进程选择一个合适的CPU */
 	int  (*select_task_rq)(struct task_struct *p, int task_cpu, int sd_flag, int flags);
+	/* 迁移任务到另一个CPU */
 	void (*migrate_task_rq)(struct task_struct *p);
 
+	/* 专门用于唤醒进程*/
 	void (*task_waking) (struct task_struct *task);
 	void (*task_woken) (struct rq *this_rq, struct task_struct *task);
 
+	/* 修改进程在CPU的亲和力 */
 	void (*set_cpus_allowed)(struct task_struct *p,
 				 const struct cpumask *newmask);
 
+	/* 启动运行队列 */
 	void (*rq_online)(struct rq *rq);
+	/* 禁止运行队列 */
 	void (*rq_offline)(struct rq *rq);
 #endif
 
+	/* 当进程改变它的调度类或进程组的时候被调用*/
 	void (*set_curr_task) (struct rq *rq);
+	/* 它可能引起进程切换，将驱动运行时（running）抢占 */
+	/* 在每次激活周期调度器时，有周期性调度器调用 */
 	void (*task_tick) (struct rq *rq, struct task_struct *p, int queued);
+	/* 当进程创建的时候调用，不同调度策略的进程初始化也是不一样的 */
 	void (*task_fork) (struct task_struct *p);
+	/* 进程退出时会使用 */
 	void (*task_dead) (struct task_struct *p);
 
 	/*
@@ -1215,8 +1237,10 @@ struct sched_class {
 	 * cannot assume the switched_from/switched_to pair is serliazed by
 	 * rq->lock. They are however serialized by p->pi_lock.
 	 */
+	/* 专门用于进程切换操作 */
 	void (*switched_from) (struct rq *this_rq, struct task_struct *task);
 	void (*switched_to) (struct rq *this_rq, struct task_struct *task);
+	/* 改变进程优先级 */
 	void (*prio_changed) (struct rq *this_rq, struct task_struct *task,
 			     int oldprio);
 

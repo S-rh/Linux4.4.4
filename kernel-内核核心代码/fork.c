@@ -1764,11 +1764,11 @@ long _do_fork(unsigned long clone_flags,
 #ifndef CONFIG_HAVE_COPY_THREAD_TLS
 /* For compatibility with architectures that call do_fork directly rather than
  * using the syscall entry points below. */
-long do_fork(unsigned long clone_flags,
-	      unsigned long stack_start,
-	      unsigned long stack_size,
-	      int __user *parent_tidptr,
-	      int __user *child_tidptr)
+long do_fork(unsigned long clone_flags,   // 标志集合
+	      unsigned long stack_start,      // 用户态下栈的起始地址
+	      unsigned long stack_size,       // 用户态下栈的大小
+	      int __user *parent_tidptr,      // 指向父进程
+	      int __user *child_tidptr)       // 指向子进程
 {
 	return _do_fork(clone_flags, stack_start, stack_size,
 			parent_tidptr, child_tidptr, 0);
