@@ -18,6 +18,13 @@
  * MAX_RT_PRIO must not be smaller than MAX_USER_RT_PRIO.
  */
 
+/* 进程分类 */
+/* 实时进程（Real-Time Process）：优先级高、需要立即被执行的进程*/
+/* 普通进程（Normal Process）：优先级低、更长执行时间的进程*/
+
+/* 进程优先级用一个0-139的整数来表示。数字越小，优先级越高。*/
+/* 0-99留给实时进程，100-139留给普通进程 */
+
 #define MAX_USER_RT_PRIO	100
 #define MAX_RT_PRIO		MAX_USER_RT_PRIO
 
