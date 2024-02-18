@@ -1263,11 +1263,21 @@ static inline void put_prev_task(struct rq *rq, struct task_struct *prev)
 #define for_each_class(class) \
    for (class = sched_class_highest; class; class = class->next)
 
-extern const struct sched_class stop_sched_class;
+/* 每一个进程都有对应一种调度策略，每一种调度策略又对应一种调度类 */
+/* 每一个调度类可以对应多种调度策略 */
+
+/* rt_sched_class类  实时调度器（调度策略：SCHED_FIFO、SCHED_RR） */
+/* fair_sched_class类 完全公平调度器（调度策略：SCHED_NORMAL、SCHED_BATCJ等）*/
+/* SCHED_FIFO调度策略的实时进程永远比SCHED_NORMAL调度策略的普通进程优先运行 */
+
+/* 调度类优先级顺序：stop_sched_class > dl_sched_class > rt_sched_class > fair_sched_class > idle_sched_class */
+/* Linux调度核心选择下一个合适的task运行时，会按照优先级顺序遍历调度类的pick_next_task函数 */
+extern const struct sched_class stop_sched_class;		// 优先级最高的线程，会中断所有其他线程，并且不会被其他任务打断
 extern const struct sched_class dl_sched_class;
-extern const struct sched_class rt_sched_class;
-extern const struct sched_class fair_sched_class;
-extern const struct sched_class idle_sched_class;
+extern const struct sched_class rt_sched_class;			// 用于实时线程
+extern const struct sched_class fair_sched_class;		// 公平调度器CFS，用于一般常用线程
+extern const struct sched_class idle_sched_class;		// 每个CPU的第一个PID=0的线程、swapper,是一个静态线程，调度类属于idle_sched_class。一般运行在开机过程和CPU异常的时候做dump
+
 
 
 #ifdef CONFIG_SMP
