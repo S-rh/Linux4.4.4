@@ -344,8 +344,12 @@ struct cfs_bandwidth { };
 #endif	/* CONFIG_CGROUP_SCHED */
 
 /* CFS-related fields in a runqueue */
+/* CFS调度运行队列，每个CPU的rq会包含一个cfs_rq，每个组调度的sched_entity也会有一个cfs_rq队列 */
 struct cfs_rq {
+	// CFS运行队列中所有进程的总负载
 	struct load_weight load;
+	// nr_running：cfs_rq中调度实体数量
+	// h_nr_running：只对进程有效
 	unsigned int nr_running, h_nr_running;
 
 	u64 exec_clock;
@@ -354,7 +358,9 @@ struct cfs_rq {
 	u64 min_vruntime_copy;
 #endif
 
+	// 红黑树的root
 	struct rb_root tasks_timeline;
+	// 下一个调度节点（红黑树最左边节点就是下一个调度实体）
 	struct rb_node *rb_leftmost;
 
 	/*
