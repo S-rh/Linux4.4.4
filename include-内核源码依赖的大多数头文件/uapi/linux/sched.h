@@ -33,13 +33,13 @@
 /*
  * Scheduling policies
  */
-#define SCHED_NORMAL		0
-#define SCHED_FIFO		1
-#define SCHED_RR		2
-#define SCHED_BATCH		3
+#define SCHED_NORMAL		0           // 用于普通进程，通过CFS调度器实现。
+#define SCHED_FIFO		1           // 先进先出调度算法（实时调度策略），相同优先级任务先到先服务，高优先级可以抢占低优先级的任务。
+#define SCHED_RR		2              // 轮询调度算法（实时调度策略）
+#define SCHED_BATCH		3           // 相当于SCHED_NORMAL分化版本，采用分时策略，根据动态优先级，分配CPU运行需要的资源。用于非交互处理器消耗型进程/
 /* SCHED_ISO: reserved but not implemented yet */
-#define SCHED_IDLE		5
-#define SCHED_DEADLINE		6
+#define SCHED_IDLE		5           // 优先级最低，在系统空闲时才会执行这类进程。
+#define SCHED_DEADLINE		6        // 实时进程调度策略，针对突发性计算。
 
 /* Can be ORed in to make sure the process is reverted back to SCHED_NORMAL on fork */
 #define SCHED_RESET_ON_FORK     0x40000000
