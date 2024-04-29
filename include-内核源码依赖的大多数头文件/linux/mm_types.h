@@ -297,13 +297,17 @@ struct vm_userfaultfd_ctx {};
 struct vm_area_struct {
 	/* The first cache line has the info for VMA tree walking. */
 
+	// 指定了该区域在用户空间的起始和结束地址
 	unsigned long vm_start;		/* Our start address within vm_mm. */
-	unsigned long vm_end;		/* The first byte after our end address
-					   within vm_mm. */
+								// vm_mm内的起始地址
+	unsigned long vm_end;		/* The first byte after our end address within vm_mm. */
+								// 在vm_mm内结束地址之后的第一个字节的地址
 
 	/* linked list of VM areas per task, sorted by address */
+	// 各进程的虚拟内存区域链表，按地址排序，vm_next实现了进程所有vm_area_struct实例链表
 	struct vm_area_struct *vm_next, *vm_prev;
 
+	// 实现了vm_area_struct实例和红黑树的集成
 	struct rb_node vm_rb;
 
 	/*
@@ -317,13 +321,16 @@ struct vm_area_struct {
 	/* Second cache line starts here. */
 
 	struct mm_struct *vm_mm;	/* The address space we belong to. */
+								// 所属的地址空间，一个反向指针，指向该区域所属的mm_struct实例
 	pgprot_t vm_page_prot;		/* Access permissions of this VMA. */
+								// 该虚拟内存区域的访问权限
 	unsigned long vm_flags;		/* Flags, see mm.h. */
 
 	/*
 	 * For areas with an address space and backing store,
 	 * linkage into the address_space->i_mmap interval tree.
 	 */
+	// 共享映射：给出文件的一个区间，内核能够知道该区间映射到的所有进程
 	struct {
 		struct rb_node rb;
 		unsigned long rb_subtree_last;
@@ -391,7 +398,8 @@ struct mm_rss_stat {
 struct kioctx_table;
 struct mm_struct {
 	struct vm_area_struct *mmap;		/* list of VMAs */
-	struct rb_root mm_rb;
+										// 虚拟内存区域列表
+	struct rb_root mm_rb;				// 虚拟内存区域红黑树根节点
 	u32 vmacache_seqnum;                   /* per-thread vmacache */
 #ifdef CONFIG_MMU
 	unsigned long (*get_unmapped_area) (struct file *filp,
@@ -399,8 +407,10 @@ struct mm_struct {
 				unsigned long pgoff, unsigned long flags);
 #endif
 	unsigned long mmap_base;		/* base of mmap area */
+									// mmap区域的基地址，表示虚拟地址空间中用于内存映射的起始地址，可调用get_unmapped_area在mmap区域找到适当的位置
 	unsigned long mmap_legacy_base;         /* base of mmap area in bottom-up allocations */
 	unsigned long task_size;		/* size of task vm space */
+									// 进程虚拟内存空间的长度，该值通常为TASK_SIZE
 	unsigned long highest_vm_end;		/* highest vma end address */
 	pgd_t * pgd;
 	atomic_t mm_users;			/* How many users with user space? */
@@ -430,9 +440,10 @@ struct mm_struct {
 	unsigned long exec_vm;		/* VM_EXEC & ~VM_WRITE */
 	unsigned long stack_vm;		/* VM_GROWSUP/DOWN */
 	unsigned long def_flags;
-	unsigned long start_code, end_code, start_data, end_data;
-	unsigned long start_brk, brk, start_stack;
-	unsigned long arg_start, arg_end, env_start, env_end;
+	unsigned long start_code, end_code, start_data, end_data;	// start_code, end_code:可执行代码占用的虚拟地址空间区域   start_data, end_data:包含已初始化数据的区域
+																// 这些区域在映射到地址空间之后，长度不再改变
+	unsigned long start_brk, brk, start_stack;	// start_brk:堆的起始地址  brk:堆区域当前的结束地址（会变化）
+	unsigned long arg_start, arg_end, env_start, env_end;	// 参数列表和环境变量区域，位于栈中最高的区域
 
 	unsigned long saved_auxv[AT_VECTOR_SIZE]; /* for /proc/PID/auxv */
 

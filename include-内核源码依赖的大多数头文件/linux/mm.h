@@ -188,7 +188,7 @@ extern unsigned int kobjsize(const void *objp);
 #define VM_STACK_DEFAULT_FLAGS VM_DATA_DEFAULT_FLAGS
 #endif
 
-#ifdef CONFIG_STACK_GROWSUP
+#ifdef CONFIG_STACK_GROWSUP  // 通常栈自顶向下增长，配置该预处理器符号，支持栈自底向上增长
 #define VM_STACK_FLAGS	(VM_GROWSUP | VM_STACK_DEFAULT_FLAGS | VM_ACCOUNT)
 #else
 #define VM_STACK_FLAGS	(VM_GROWSDOWN | VM_STACK_DEFAULT_FLAGS | VM_ACCOUNT)
