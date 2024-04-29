@@ -662,6 +662,7 @@ static unsigned long randomize_stack_top(unsigned long stack_top)
 #endif
 }
 
+// 装载一个ELF二进制文件
 static int load_elf_binary(struct linux_binprm *bprm)
 {
 	struct file *interpreter = NULL; /* to shut gcc up */
@@ -845,7 +846,7 @@ static int load_elf_binary(struct linux_binprm *bprm)
 		current->personality |= READ_IMPLIES_EXEC;
 
 	if (!(current->personality & ADDR_NO_RANDOMIZE) && randomize_va_space)
-		current->flags |= PF_RANDOMIZE;
+		current->flags |= PF_RANDOMIZE;    // 设置PF_RANDOMIZE标志
 
 	setup_new_exec(bprm);
 

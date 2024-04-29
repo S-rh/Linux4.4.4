@@ -229,6 +229,7 @@ struct task_struct *task_of_stack(struct task_struct *task,
 	return NULL;
 }
 
+// HAVE_ARCH_PICK_MMAP_LAYOUT：不同的芯片体系结构想要在不同的mmap区域布局之间做出选择，需要定义该预处理器符号，并提供arch_pick_mmap_layout函数
 #if defined(CONFIG_MMU) && !defined(HAVE_ARCH_PICK_MMAP_LAYOUT)
 void arch_pick_mmap_layout(struct mm_struct *mm)
 {
