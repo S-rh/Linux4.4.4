@@ -113,12 +113,14 @@ extern unsigned int kobjsize(const void *objp);
  */
 #define VM_NONE		0x00000000
 
+// 定义了虚拟内存区域性质的标志
 #define VM_READ		0x00000001	/* currently active flags */
 #define VM_WRITE	0x00000002
 #define VM_EXEC		0x00000004
 #define VM_SHARED	0x00000008
 
 /* mprotect() hardcodes VM_MAYREAD >> 4 == VM_READ, and so for r/w/x bits. */
+// 用于确认是否可以设置对应的标志
 #define VM_MAYREAD	0x00000010	/* limits for mprotect() etc */
 #define VM_MAYWRITE	0x00000020
 #define VM_MAYEXEC	0x00000040
@@ -134,15 +136,26 @@ extern unsigned int kobjsize(const void *objp);
 #define VM_IO           0x00004000	/* Memory mapped I/O or similar */
 
 					/* Used by sys_madvise() */
+// 从头到尾顺序读取
 #define VM_SEQ_READ	0x00008000	/* App will access data sequentially */
+// 随机读取
 #define VM_RAND_READ	0x00010000	/* App will not benefit from clustered reads */
 
+// 相关区域在fork系统调用执行时不复制
 #define VM_DONTCOPY	0x00020000      /* Do not copy this vma on fork */
+// 禁止区域通过mremap系统调用扩展
 #define VM_DONTEXPAND	0x00040000	/* Cannot expand with mremap() */
+
 #define VM_LOCKONFAULT	0x00080000	/* Lock the pages covered when they are faulted in */
+
+// 指定区域是否被归入 overcommit 特性的计算中
 #define VM_ACCOUNT	0x00100000	/* Is a VM accounted object */
+
 #define VM_NORESERVE	0x00200000	/* should the VM suppress accounting */
+
+// 如果区域是基于某些体系结构支持的巨型页，需要设置该标志
 #define VM_HUGETLB	0x00400000	/* Huge TLB Page VM */
+
 #define VM_ARCH_1	0x01000000	/* Architecture-specific flag */
 #define VM_ARCH_2	0x02000000
 #define VM_DONTDUMP	0x04000000	/* Do not include in the core dump */
@@ -250,16 +263,26 @@ struct vm_fault {
  * to the functions called when a no-page or a wp-page exception occurs. 
  */
 struct vm_operations_struct {
+	// 创建区域，通常不使用，设为NULL指针
 	void (*open)(struct vm_area_struct * area);
+	// 删除区域，通常不使用，设为NULL指针
 	void (*close)(struct vm_area_struct * area);
+	// 重映射虚拟内存区域时执行特定的操作
 	int (*mremap)(struct vm_area_struct * area);
+	// 地址空间中某个虚拟内存页不再物理内存中，自动触发的缺页异常处理程序会调用该函数，
+	// 将对应的数据读取到一个映射在用户地址空间的物理内存页上
 	int (*fault)(struct vm_area_struct *vma, struct vm_fault *vmf);
+	// 用于处理页表中间级别的也错误
+	// 在处理页错误的时候，内核首先检查页表结构，以确认哪一级发生了错误
+	// 对于使用中间页表项的架构，当发生页错误而需要中间页处理的时候，将被调用
 	int (*pmd_fault)(struct vm_area_struct *, unsigned long address,
 						pmd_t *, unsigned int flags);
+	// 在执行 page fault 时，将页面映射到 VMA
 	void (*map_pages)(struct vm_area_struct *vma, struct vm_fault *vmf);
 
 	/* notification that a previously read-only page is about to become
 	 * writable, if an error is returned it will cause a SIGBUS */
+	// 通知一个先前只读的页面即将变成可写，如果返回错误，将会产生SIGBUS信号
 	int (*page_mkwrite)(struct vm_area_struct *vma, struct vm_fault *vmf);
 
 	/* same as page_mkwrite when using VM_PFNMAP|VM_MIXEDMAP */
@@ -284,6 +307,7 @@ struct vm_operations_struct {
 	 * install a MPOL_DEFAULT policy, nor the task or system default
 	 * mempolicy.
 	 */
+	// 设置内存策略
 	int (*set_policy)(struct vm_area_struct *vma, struct mempolicy *new);
 
 	/*
@@ -296,6 +320,7 @@ struct vm_operations_struct {
 	 * must return NULL--i.e., do not "fallback" to task or system default
 	 * policy.
 	 */
+	// 获取内存策略
 	struct mempolicy *(*get_policy)(struct vm_area_struct *vma,
 					unsigned long addr);
 #endif
@@ -304,6 +329,7 @@ struct vm_operations_struct {
 	 * page for @addr.  This is useful if the default behavior
 	 * (using pte_page()) would not find the correct page.
 	 */
+	// 在vm_normal_page() 中用于查找特殊的PTE所对应的页面
 	struct page *(*find_special_page)(struct vm_area_struct *vma,
 					  unsigned long addr);
 };
@@ -2029,6 +2055,7 @@ extern struct vm_area_struct * find_vma_prev(struct mm_struct * mm, unsigned lon
 
 /* Look up the first VMA which intersects the interval start_addr..end_addr-1,
    NULL if none.  Assume start_addr < end_addr. */
+// 用于确认边界为start_addr和end_addr的区间是否全包含在一个现存区域内部
 static inline struct vm_area_struct * find_vma_intersection(struct mm_struct * mm, unsigned long start_addr, unsigned long end_addr)
 {
 	struct vm_area_struct * vma = find_vma(mm,start_addr);

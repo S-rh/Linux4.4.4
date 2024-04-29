@@ -50,6 +50,14 @@
 
 #include "internal.h"
 
+// 重要的标志
+// MAP_FIXED: 指定除了给定地址之外，不能将其他地址用于映射。如果没有设置该标志，内核可以在受阻时随意改变目标地址
+// MAP_SHARED: 指定一个对象（通常是文件）在几个进程之间共享
+// MAP_PRIVATE: 创建一个与数据源分离的私有映射，对映射区域的写入操作不影响文件中的数据
+// MAP_ANONYMOUS: 创建与任何数据源都不相关的匿名映射，fd和off参数被忽略。此类映射可用于为应用程序分配类似malloc所用的内存
+
+
+
 #ifndef arch_mmap_check
 #define arch_mmap_check(addr, len, flags)	(0)
 #endif
@@ -613,6 +621,7 @@ static unsigned long count_vma_pages_range(struct mm_struct *mm,
 	return nr_pages;
 }
 
+// 将新区域连接到红黑树的数据结构中
 void __vma_link_rb(struct mm_struct *mm, struct vm_area_struct *vma,
 		struct rb_node **rb_link, struct rb_node *rb_parent)
 {
@@ -637,6 +646,7 @@ void __vma_link_rb(struct mm_struct *mm, struct vm_area_struct *vma,
 	vma_rb_insert(vma, &mm->mm_rb);
 }
 
+// 将相关的address_space和映射关联起来，并使用vma_prio_tree_insert将该区域添加到优先树中
 static void __vma_link_file(struct vm_area_struct *vma)
 {
 	struct file *file;
@@ -724,6 +734,7 @@ __vma_unlink(struct mm_struct *mm, struct vm_area_struct *vma,
  * are necessary.  The "insert" vma (if any) is to be inserted
  * before we drop the necessary locks.
  */
+// 区域合并的最后执行函数，会适当修改涉及的所有数据结构（优先树、vm_area_struct实例），释放不再需要的结构实例
 int vma_adjust(struct vm_area_struct *vma, unsigned long start,
 	unsigned long end, pgoff_t pgoff, struct vm_area_struct *insert)
 {
@@ -1037,6 +1048,17 @@ can_vma_merge_after(struct vm_area_struct *vma, unsigned long vm_flags,
  * Odd one out? Case 8, because it extends NNNN but needs flags of XXXX:
  * mprotect_fixup updates vm_flags & vm_page_prot on successful return.
  */
+// 在可能的情况下，将一个新区域与周边区域合并
+// 1. 检查确认前一个区域的结束地址是否对应于新区域的起始地址
+// 2. 检查两个区域的标志和映射文件是否相同，文件映射内部的偏移量是否符合连续区域的要求
+// 3. 两个区域内都不包含匿名映射，而且两个区域彼此兼容
+
+// mm: 相关进程的地址空间实例
+// prev: 紧接着新区域之前的区域
+// addr、end、vm_flags: 新区域的开始地址、结束地址、标志
+// file: 如果区域是一个文件映射，则该变量是一个指向该文件的file实例的指针
+// pgoff: 指定了映射在文件数据内的偏移量
+// policy: 只在NUMA系统上需要
 struct vm_area_struct *vma_merge(struct mm_struct *mm,
 			struct vm_area_struct *prev, unsigned long addr,
 			unsigned long end, unsigned long vm_flags,
@@ -2007,6 +2029,7 @@ arch_get_unmapped_area_topdown(struct file *filp, const unsigned long addr0,
 }
 #endif
 
+// 确认虚拟地址空间中是否有足够的空闲空间
 unsigned long
 get_unmapped_area(struct file *file, unsigned long addr, unsigned long len,
 		unsigned long pgoff, unsigned long flags)
@@ -2056,7 +2079,7 @@ struct vm_area_struct *find_vma(struct mm_struct *mm, unsigned long addr)
 
 	while (rb_node) {
 		struct vm_area_struct *tmp;
-
+		// rb_entry 用于从节点取出数据
 		tmp = rb_entry(rb_node, struct vm_area_struct, vm_rb);
 
 		if (tmp->vm_end > addr) {
@@ -2891,6 +2914,7 @@ void exit_mmap(struct mm_struct *mm)
  * and into the inode's i_mmap tree.  If vm_file is non-NULL
  * then i_mmap_rwsem is taken here.
  */
+// 插入新区域
 int insert_vm_struct(struct mm_struct *mm, struct vm_area_struct *vma)
 {
 	struct vm_area_struct *prev;

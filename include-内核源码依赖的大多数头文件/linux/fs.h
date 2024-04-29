@@ -366,15 +366,19 @@ typedef int (*read_actor_t)(read_descriptor_t *, struct page *,
 		unsigned long, unsigned long);
 
 struct address_space_operations {
+	// 将一页的内容从物理内存写回到块设备上对应的位置，以便永久地保存更改的内容
 	int (*writepage)(struct page *page, struct writeback_control *wbc);
+	// 从潜在的块设备读取一页到物理内存中
 	int (*readpage)(struct file *, struct page *);
 
 	/* Write back some dirty pages from this mapping. */
 	int (*writepages)(struct address_space *, struct writeback_control *);
 
 	/* Set a page dirty.  Return true if this dirtied it */
+	// 表示一页的内容已经改变，即与块设备上的原始内容不再匹配
 	int (*set_page_dirty)(struct page *page);
 
+	// 从潜在的块设备中一次读取几页到物理内存中
 	int (*readpages)(struct file *filp, struct address_space *mapping,
 			struct list_head *pages, unsigned nr_pages);
 
@@ -423,12 +427,17 @@ int pagecache_write_end(struct file *, struct address_space *mapping,
 				loff_t pos, unsigned len, unsigned copied,
 				struct page *page, void *fsdata);
 
+// 优先查找树的继续
+// 在打开文件时，内核将file->f_mapping设置到inode->i_mapping
+// inode 是一个特定于文件的数据结构，file 是特定于给定的进程，这使得多个进程可以访问同一个文件，而不会直接干扰到其他进程
 struct address_space {
 	struct inode		*host;		/* owner: inode, block_device */
 	struct radix_tree_root	page_tree;	/* radix tree of all pages */
 	spinlock_t		tree_lock;	/* and lock protecting it */
 	atomic_t		i_mmap_writable;/* count VM_SHARED mappings */
+	// 私有和共享映射的树
 	struct rb_root		i_mmap;		/* tree of private and shared mappings */
+
 	struct rw_semaphore	i_mmap_rwsem;	/* protect tree, count, list */
 	/* Protected by tree_lock together with the radix tree */
 	unsigned long		nrpages;	/* number of total pages */
