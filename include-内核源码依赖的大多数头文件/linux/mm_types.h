@@ -342,17 +342,27 @@ struct vm_area_struct {
 	 * can only be in the i_mmap tree.  An anonymous MAP_PRIVATE, stack
 	 * or brk vma (with NULL file) can only be in an anon_vma list.
 	 */
+	// 这是一个 list_head 结构，用于在一个 struct vm_area_struct 中连接多个具有相同匿名内存映射的 anon_vma 结构。
+	// 这表示一个文件的 MAP_PRIVATE 类型的 VMA（Virtual Memory Area，虚拟内存区域）可能同时存在于 i_mmap 树和 anon_vma_chain 链表中，
+	// 这是因为文件中的页面在写时复制（COW）后会产生新的匿名页。该链表在 mmap_sem 和 page_table_lock 的保护下进行序列化。
 	struct list_head anon_vma_chain; /* Serialized by mmap_sem &
 					  * page_table_lock */
+	// 这是指向 struct anon_vma 结构的指针，用于表示虚拟内存区域中的匿名内存映射。
+	// 对于具有 NULL 文件的匿名 MAP_PRIVATE、堆栈或 brk VMA，它们只会存在于匿名记忆体链表中。
+	// 该指针在 page_table_lock 的保护下进行序列化。
 	struct anon_vma *anon_vma;	/* Serialized by page_table_lock */
 
 	/* Function pointers to deal with this struct. */
+	// 指向许多方法的集合，这些方法用于在区域上执行各种标准操作
 	const struct vm_operations_struct *vm_ops;
 
 	/* Information about our backing store: */
+	// 指定了文件映射的偏移量，该值用于只映射了文件部分内容时（偏移单位是页 PAGE_SIZE）
 	unsigned long vm_pgoff;		/* Offset (within vm_file) in PAGE_SIZE
 					   units, *not* PAGE_CACHE_SIZE */
+	// 指向file实例，描述一个被映射的文件（如果映射的对象不是文件，则为NULL指针）
 	struct file * vm_file;		/* File we map to (can be NULL). */
+	// 取决于映射类型，可用于存储私有数据，不由通用内存管理例程操作
 	void * vm_private_data;		/* was vm_pte (shared mem) */
 
 #ifndef CONFIG_MMU
