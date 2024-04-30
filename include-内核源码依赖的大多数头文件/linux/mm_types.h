@@ -96,6 +96,9 @@ struct page {
 					 * never succeed on tail
 					 * pages.
 					 */
+					// 表明共享该页的位置的树木。计数器初始值为 -1。
+					// 在页插入到逆向映射数据结构时，计数器赋值为0.页每增加一个使用者时，计数器加1。
+					// 这使得内核能够快速检查在所有者之外该页有多少使用者。
 					atomic_t _mapcount;
 
 					struct { /* SLUB */

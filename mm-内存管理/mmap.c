@@ -327,6 +327,8 @@ SYSCALL_DEFINE1(brk, unsigned long, brk)
 			      mm->end_data, mm->start_data))
 		goto out;
 
+	// 将请求地址按页长度对齐
+	// 该代码确保brk的新值是系统页长度的倍数。（一页是用brk能分配的最小内存区域）
 	newbrk = PAGE_ALIGN(brk);
 	oldbrk = PAGE_ALIGN(mm->brk);
 	if (oldbrk == newbrk)
@@ -2401,6 +2403,7 @@ EXPORT_SYMBOL_GPL(find_extend_vma);
  *
  * Called with the mm semaphore held.
  */
+// 释放vm_area_struct实例占用的空间
 static void remove_vma_list(struct mm_struct *mm, struct vm_area_struct *vma)
 {
 	unsigned long nr_accounted = 0;
@@ -2424,6 +2427,7 @@ static void remove_vma_list(struct mm_struct *mm, struct vm_area_struct *vma)
  *
  * Called with the mm semaphore held.
  */
+// 从页表删除与映射相关的所有项，同时确保将相关的项从TLB移除或使之无效
 static void unmap_region(struct mm_struct *mm,
 		struct vm_area_struct *vma, struct vm_area_struct *prev,
 		unsigned long start, unsigned long end)
@@ -2444,6 +2448,7 @@ static void unmap_region(struct mm_struct *mm,
  * Create a list of vma's touched by the unmap, removing them from the mm's
  * vma list as we go..
  */
+// 解除所有需要解除映射的区域
 static void
 detach_vmas_to_be_unmapped(struct mm_struct *mm, struct vm_area_struct *vma,
 	struct vm_area_struct *prev, unsigned long end)
@@ -2556,6 +2561,7 @@ int split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
  * work.  This now handles partial unmappings.
  * Jeremy Fitzhardinge <jeremy@goop.org>
  */
+// 从虚拟地址空间删除现存映射
 int do_munmap(struct mm_struct *mm, unsigned long start, size_t len)
 {
 	unsigned long end;
@@ -2598,7 +2604,7 @@ int do_munmap(struct mm_struct *mm, unsigned long start, size_t len)
 		if (end < vma->vm_end && mm->map_count >= sysctl_max_map_count)
 			return -ENOMEM;
 
-		error = __split_vma(mm, vma, start, 0);
+		error = __split_vma(mm, vma, start, 0);  // __split_vma 分裂映射
 		if (error)
 			return error;
 		prev = vma;
