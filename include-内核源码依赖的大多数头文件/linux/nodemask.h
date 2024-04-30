@@ -370,10 +370,14 @@ static inline void __nodes_fold(nodemask_t *dstp, const nodemask_t *origp,
  * Bitmasks that are kept for all the nodes.
  */
 enum node_states {
+	// 结点在某个时候可能变成联机
 	N_POSSIBLE,		/* The node could become online at some point */
+	// 结点是联机的
 	N_ONLINE,		/* The node is online */
+	// 结点是普通内存域
 	N_NORMAL_MEMORY,	/* The node has regular memory */
 #ifdef CONFIG_HIGHMEM
+	// 结点有普通或高端内存域
 	N_HIGH_MEMORY,		/* The node has regular or high memory */
 #else
 	N_HIGH_MEMORY = N_NORMAL_MEMORY,
@@ -383,6 +387,7 @@ enum node_states {
 #else
 	N_MEMORY = N_HIGH_MEMORY,
 #endif
+	// 结点有一个或多个内存域
 	N_CPU,		/* The node has one or more cpus */
 	NR_NODE_STATES
 };
@@ -464,6 +469,7 @@ static inline int num_node_state(enum node_states state)
 	return 1;
 }
 
+// 迭代出于特殊状态的所有结点
 #define for_each_node_state(node, __state) \
 	for ( (node) = 0; (node) == 0; (node) = 1)
 

@@ -291,7 +291,7 @@ enum zone_type {
 	 * i386, x86_64 and multiple other arches
 	 * 			<16M.
 	 */
-	ZONE_DMA,
+	ZONE_DMA,		// 标记适合DMA的内存域
 #endif
 #ifdef CONFIG_ZONE_DMA32
 	/*
@@ -299,14 +299,15 @@ enum zone_type {
 	 * only able to do DMA to the lower 16M but also 32 bit devices that
 	 * can only do DMA areas below 4G.
 	 */
-	ZONE_DMA32,
+	ZONE_DMA32,		// 标记使用32位地址字可寻址、适合DMA的内存域
+					// 在32位计算机上，本内存域是空的，在Alpha和AMD64系统上，该内存域的长度可能从0到4GiB
 #endif
 	/*
 	 * Normal addressable memory is in ZONE_NORMAL. DMA operations can be
 	 * performed on pages in ZONE_NORMAL if the DMA devices support
 	 * transfers to all addressable memory.
 	 */
-	ZONE_NORMAL,
+	ZONE_NORMAL,		// 标记了可直接映射到内核段的普通内存域
 #ifdef CONFIG_HIGHMEM
 	/*
 	 * A memory area that is only addressable by the kernel through
@@ -316,7 +317,7 @@ enum zone_type {
 	 * table entries on i386) for each page that the kernel needs to
 	 * access.
 	 */
-	ZONE_HIGHMEM,
+	ZONE_HIGHMEM,		// 标记了超出内核段的物理内存
 #endif
 	ZONE_MOVABLE,
 #ifdef CONFIG_ZONE_DEVICE
@@ -345,6 +346,7 @@ struct zone {
 	 * recalculated at runtime if the sysctl_lowmem_reserve_ratio sysctl
 	 * changes.
 	 */
+	 // 分别为各种内存域指定若干页，用于一些无论如何都不能失败的关键性内存分配
 	long lowmem_reserve[MAX_NR_ZONES];
 
 #ifdef CONFIG_NUMA
@@ -356,7 +358,7 @@ struct zone {
 	 * this zone's LRU.  Maintained by the pageout code.
 	 */
 	unsigned int inactive_ratio;
-
+	// 实现内存域和付姐点之间的关联，zone_pgdat指向对应的pglist_data实例
 	struct pglist_data	*zone_pgdat;
 	struct per_cpu_pageset __percpu *pageset;
 
@@ -470,12 +472,14 @@ struct zone {
 	 * primary users of these fields, and in mm/page_alloc.c
 	 * free_area_init_core() performs the initialization of them.
 	 */
+	 // 以下三个参数实现了一个等待队列
 	wait_queue_head_t	*wait_table;
 	unsigned long		wait_table_hash_nr_entries;
 	unsigned long		wait_table_bits;
 
 	ZONE_PADDING(_pad1_)
 	/* free areas of different sizes */
+	// 用于实现伙伴系统。每个数组元素都表示某种固定长度的一些连续内存区。对于包含在每个区域中的空闲内存页管理，free_area是一个起点
 	struct free_area	free_area[MAX_ORDER];
 
 	/* zone flags, see below */
@@ -527,6 +531,7 @@ struct zone {
 
 	ZONE_PADDING(_pad3_)
 	/* Zone statistics */
+	// 维护有关该内存域的统计信息
 	atomic_long_t		vm_stat[NR_VM_ZONE_STAT_ITEMS];
 } ____cacheline_internodealigned_in_smp;
 
@@ -635,10 +640,14 @@ extern struct page *mem_map;
  */
 struct bootmem_data;
 typedef struct pglist_data {
+	// 包含结点中个内存域的数据结构
 	struct zone node_zones[MAX_NR_ZONES];
+	// 指定了备用结点及其内存域的列表，以便在当前结点没有可用空间时，在备用结点上分配内存
 	struct zonelist node_zonelists[MAX_ZONELISTS];
+	// 结点中不同内存域的数量
 	int nr_zones;
 #ifdef CONFIG_FLAT_NODE_MEM_MAP	/* means !SPARSEMEM */
+	// 指向page实例数组的指针，用于描述结点的所有物理内存页。包含了结点中所有内存域的页
 	struct page *node_mem_map;
 #ifdef CONFIG_PAGE_EXTENSION
 	struct page_ext *node_page_ext;
@@ -660,11 +669,15 @@ typedef struct pglist_data {
 	 */
 	spinlock_t node_size_lock;
 #endif
+	// 该NUMA结点第一个页帧的逻辑编号。系统中所有结点的页帧是依次编号的，每个页帧的号码都是全局唯一的
+	// 在UMA系统中总是0，因为只有一个结点
 	unsigned long node_start_pfn;
 	unsigned long node_present_pages; /* total number of physical pages */
 	unsigned long node_spanned_pages; /* total size of physical page
 					     range, including holes */
+	// 全局结点ID，系统中的NUMA结点都是从0开始编号
 	int node_id;
+	// 交换守护进程（swap daemon）的等待队列
 	wait_queue_head_t kswapd_wait;
 	wait_queue_head_t pfmemalloc_wait;
 	struct task_struct *kswapd;	/* Protected by
