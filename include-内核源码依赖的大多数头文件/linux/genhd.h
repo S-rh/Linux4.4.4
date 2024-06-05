@@ -101,6 +101,7 @@ struct partition_meta_info {
 };
 
 struct hd_struct {
+	// start_sect 和 nr_sects 定义了该分区在块设备上的起始扇区和长度，因而唯一地描述了该分区
 	sector_t start_sect;
 	/*
 	 * nr_sects is protected by sequence counter. One might extend a
@@ -108,6 +109,7 @@ struct hd_struct {
 	 * can be non-atomic on 32bit machines with 64bit sector_t.
 	 */
 	sector_t nr_sects;
+
 	seqcount_t nr_sects_seq;
 	sector_t alignment_offset;
 	unsigned int discard_alignment;
@@ -184,6 +186,7 @@ struct gendisk {
 	int minors;                     /* maximum number of minors, =1 for
                                          * disks that can't be partitioned. */
 
+	// 磁盘名称，用于在sysfs和/proc/partitions中表示该磁盘
 	char disk_name[DISK_NAME_LEN];	/* name of major driver */
 	char *(*devnode)(struct gendisk *gd, umode_t *mode);
 
@@ -198,11 +201,15 @@ struct gendisk {
 	struct disk_part_tbl __rcu *part_tbl;
 	struct hd_struct part0;
 
+	// 一个指向特定于设备、执行各种底层任务的哥哥函数的指针
 	const struct block_device_operations *fops;
+	// 用于管理请求队列
 	struct request_queue *queue;
+	// 一个指向私有驱动程序数据，不会由块设备层的通用函数修改的指针
 	void *private_data;
 
 	int flags;
+	// 标识该磁盘所属的硬件设备
 	struct device *driverfs_dev;  // FIXME: remove
 	struct kobject *slave_dir;
 
@@ -629,6 +636,8 @@ extern void delete_partition(struct gendisk *, int);
 extern void printk_all_partitions(void);
 
 extern struct gendisk *alloc_disk_node(int minors, int node_id);
+// 给出设备的从设备号数目，调用该函数可以自动分配genhd实例，其中包括了指向各个分区的hd_struct的指针所需的空间（只包括了指针自身所需的内存）
+// alloc_disk将新的磁盘集成到设备模型的数据结构中，因此gendisk销毁的时候需要使用del_gendisk
 extern struct gendisk *alloc_disk(int minors);
 extern struct kobject *get_disk(struct gendisk *disk);
 extern void put_disk(struct gendisk *disk);

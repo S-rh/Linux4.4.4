@@ -18,13 +18,13 @@
 
 struct kobj_map {
 	struct probe {
-		struct probe *next;
-		dev_t dev;
-		unsigned long range;
-		struct module *owner;
-		kobj_probe_t *get;
+		struct probe *next;		// 将所有散列元素连接到一个单链表中
+		dev_t dev;				// 设备号，包含了主设备号和从设备号
+		unsigned long range;	// 从设备号的连续范围
+		struct module *owner;	// 指向提供设备驱动程序的模块
+		kobj_probe_t *get;		// 指向一个函数，可以返回于设备关联的kobject实例
 		int (*lock)(dev_t, void *);
-		void *data;
+		void *data;				// 字符设备指向struct cdev的一个实例，块设备指向struct genhd的一个实例
 	} *probes[255];
 	struct mutex *lock;
 };

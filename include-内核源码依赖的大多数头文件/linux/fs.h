@@ -457,8 +457,11 @@ struct address_space {
 struct request_queue;
 
 struct block_device {
+	// 块设备的设备号
 	dev_t			bd_dev;  /* not a kdev_t - it's a search key */
+	// 统计用do_open打开该块设备的次数
 	int			bd_openers;
+	// 指向bdev伪文件系统中表示改块设备的inode（该信息可以使用bdget获取，此处冗余）
 	struct inode *		bd_inode;	/* will die */
 	struct super_block *	bd_super;
 	struct mutex		bd_mutex;	/* open/close mutex */
@@ -472,13 +475,24 @@ struct block_device {
 #endif
 	struct block_device *	bd_contains;
 	unsigned		bd_block_size;
+	// 指向一个专用的数据结构（struct hd_struct），表示包含在该块设备上的分区
 	struct hd_struct *	bd_part;
+	// 使用计数，计算了内核中引用该设备内分区的次数
+	// 在用rescan_partitions重新扫描分区时，如果bd_part_count大于0，则禁止重新扫描
 	/* number of times partitions within this device have been opened. */
 	unsigned		bd_part_count;
+	// 设置为1时，表示该分区在内核中的信息无效，因为磁盘上的分区已经改变
+	// 下一次打开该设备时，将要重新扫描分区表
 	int			bd_invalidated;
+	// 提供一个抽象层，用来划分硬盘
 	struct gendisk *	bd_disk;
 	struct request_queue *  bd_queue;
+	// 用于跟踪记录系统中所有可用的block_device实例。
+	// 该链表的表头为全局变量all_bdevs，使用该链表，无需查询块设备数据库，即可遍历所有块设备
 	struct list_head	bd_list;
+	
+	// 用于在block_device实例中存储特定于持有者的数据
+	// 只有该block_device实例的当前持有者可以使用bd_private。使用bd_claim将bd_holder指向当前持有者（前提：bd_holder为NULL）
 	/*
 	 * Private data.  You must have bd_claim'ed the block_device
 	 * to use this.  NOTE:  bd_claim allows an owner to claim
@@ -667,6 +681,7 @@ struct inode {
 #ifdef CONFIG_IMA
 	atomic_t		i_readcount; /* struct files open RO */
 #endif
+	// 函数指针集合，包括许多文件操作（打开、读取、写入等），由虚拟文件系统使用来处理块设备
 	const struct file_operations	*i_fop;	/* former ->i_op->default_file_ops */
 	struct file_lock_context	*i_flctx;
 	struct address_space	i_data;
@@ -2340,7 +2355,9 @@ static inline void bd_unlink_disk_holder(struct block_device *bdev,
 
 /* fs/char_dev.c */
 #define CHRDEV_MAJOR_HASH_SIZE	255
+// 由内核选择适当范围的设备号
 extern int alloc_chrdev_region(dev_t *, unsigned, unsigned, const char *);
+// 驱动程序指定使用特定范围内的设备号
 extern int register_chrdev_region(dev_t, unsigned, const char *);
 extern int __register_chrdev(unsigned int major, unsigned int baseminor,
 			     unsigned int count, const char *name,

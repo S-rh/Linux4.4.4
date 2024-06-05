@@ -624,6 +624,8 @@ static int bdev_set(struct inode *inode, void *data)
 
 static LIST_HEAD(all_bdevs);
 
+// 给定设备号，查找bdev伪文件系统，看对应的inode是否存在，如果存在，则返回指向inode的指针
+// 利用返回的inode指针，可以找到该设备的block_device实例
 struct block_device *bdget(dev_t dev)
 {
 	struct block_device *bdev;

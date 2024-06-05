@@ -358,7 +358,7 @@ struct zone {
 	 * this zone's LRU.  Maintained by the pageout code.
 	 */
 	unsigned int inactive_ratio;
-	// 实现内存域和付姐点之间的关联，zone_pgdat指向对应的pglist_data实例
+	// 实现内存域和父结点之间的关联，zone_pgdat指向对应的pglist_data实例
 	struct pglist_data	*zone_pgdat;
 	struct per_cpu_pageset __percpu *pageset;
 
@@ -536,18 +536,24 @@ struct zone {
 } ____cacheline_internodealigned_in_smp;
 
 enum zone_flags {
+	// 该zone已被锁定，防止并发的回首操作
 	ZONE_RECLAIM_LOCKED,		/* prevents concurrent reclaim */
+	// 该zone在OOM的区域列表中
 	ZONE_OOM_LOCKED,		/* zone is in OOM killer zonelist */
+	// 该zone具有许多由拥塞的BDI（Backing Device Interface）支持的脏页面
 	ZONE_CONGESTED,			/* zone has many dirty pages backed by
 					 * a congested BDI
 					 */
+	// 最近的回收扫描在LRU（Least Recently Used）队列尾部发现了许多脏文件页面
 	ZONE_DIRTY,			/* reclaim scanning has recently found
 					 * many dirty file pages at the tail
 					 * of the LRU.
 					 */
+	// 最近的回收扫描发现了许多正在写回的页面
 	ZONE_WRITEBACK,			/* reclaim scanning has recently found
 					 * many pages under writeback
 					 */
+	// 公平区域策略的批次已耗尽
 	ZONE_FAIR_DEPLETED,		/* fair zone policy batch depleted */
 };
 

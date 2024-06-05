@@ -29,11 +29,11 @@ static struct kobj_map *cdev_map;
 static DEFINE_MUTEX(chrdevs_lock);
 
 static struct char_device_struct {
-	struct char_device_struct *next;
-	unsigned int major;
-	unsigned int baseminor;
+	struct char_device_struct *next;	// 连接同一散列行中的所有散列元素
+	unsigned int major;					// 指定了主设备号
+	unsigned int baseminor;				// 包含minorct个从设备号的连续范围中最小的从设备号
 	int minorct;
-	char name[64];
+	char name[64];						// 为设备提供了一个标识符
 	struct cdev *cdev;		/* will die */
 } *chrdevs[CHRDEV_MAJOR_HASH_SIZE];
 

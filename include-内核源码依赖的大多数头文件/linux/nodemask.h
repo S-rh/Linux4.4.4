@@ -387,7 +387,7 @@ enum node_states {
 #else
 	N_MEMORY = N_HIGH_MEMORY,
 #endif
-	// 结点有一个或多个内存域
+	// 结点有一个或多个CPU
 	N_CPU,		/* The node has one or more cpus */
 	NR_NODE_STATES
 };
