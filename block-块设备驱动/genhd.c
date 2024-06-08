@@ -473,6 +473,7 @@ static char *bdevt_str(dev_t devt, char *buf)
  * range must be nonzero
  * The hash chain is sorted on range, so that subranges can override.
  */
+// 确认所要求的设备号范围尚未分配
 void blk_register_region(dev_t devt, unsigned long range, struct module *module,
 			 struct kobject *(*probe)(dev_t, int *, void *),
 			 int (*lock)(dev_t, void *), void *data)
@@ -719,6 +720,7 @@ EXPORT_SYMBOL(get_gendisk);
  * RETURNS:
  * Resulting block_device on success, NULL on failure.
  */
+// 获取该设备的一个新的block_device实例
 struct block_device *bdget_disk(struct gendisk *disk, int partno)
 {
 	struct hd_struct *part;

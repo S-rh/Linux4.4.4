@@ -208,9 +208,14 @@ static inline unsigned short req_get_ioprio(struct request *req)
 
 struct blk_queue_ctx;
 
+// 向队列添加新请求的标准接口。在内核期望驱动程序执行某些工作时，内核会自动调用该函数
+// 在内核中，该函数也称为策略例程
 typedef void (request_fn_proc) (struct request_queue *q);
+// 创建新情求，如果链表中有足够多的请求，则会调用特定于驱动程序的request_fn函数，以处理这些请求
 typedef blk_qc_t (make_request_fn) (struct request_queue *q, struct bio *bio);
+// 请求预备函数
 typedef int (prep_rq_fn) (struct request_queue *, struct request *);
+// 拔出一个块设备时调用。插入的设备不会执行请求，而是将请求收集起来，在拔出时执行。
 typedef void (unprep_rq_fn) (struct request_queue *, struct request *);
 
 struct bio_vec;
@@ -253,11 +258,11 @@ struct queue_limits {
 	unsigned long		seg_boundary_mask;
 	unsigned long		virt_boundary_mask;
 
-	unsigned int		max_hw_sectors;
+	unsigned int		max_hw_sectors;				// 指定了驱动程序可以传递到设备的地址/长度对的最大数目
 	unsigned int		max_dev_sectors;
 	unsigned int		chunk_sectors;
-	unsigned int		max_sectors;
-	unsigned int		max_segment_size;
+	unsigned int		max_sectors;				// 指定设备在单个请求中可以处理的扇区的最大数目。长度单位是具体设备的扇区长度（hardsect_size）
+	unsigned int		max_segment_size;			// 单个请求的最大段长度（按字节计算）
 	unsigned int		physical_block_size;
 	unsigned int		alignment_offset;
 	unsigned int		io_min;
@@ -283,8 +288,11 @@ struct request_queue {
 	/*
 	 * Together with queue_head for cacheline sharing
 	 */
+	// 表头，用于构建一个I/O请求的双链表，链表每个元素的数据类型都是request，代表向块设备读取数据的一个请求
+	// 内核会重排该链表以取得更好的I/O性能
 	struct list_head	queue_head;
 	struct request		*last_merge;
+	// 以函数指针的形式将所需的函数麇集起来
 	struct elevator_queue	*elevator;
 	int			nr_rqs[2];	/* # allocated [a]sync rqs */
 	int			nr_rqs_elvpriv;	/* # allocated rqs w/ elvpriv */
@@ -953,6 +961,7 @@ extern void blk_unprep_request(struct request *);
 /*
  * Access functions for manipulating queue properties
  */
+// 用于产生一个标准的请求队列，在调用add_disk激活磁盘之前，需要调用该函数创建请求队列，并将结果request_queue实例附加到设备的gendisk实例
 extern struct request_queue *blk_init_queue_node(request_fn_proc *rfn,
 					spinlock_t *lock, int node_id);
 extern struct request_queue *blk_init_queue(request_fn_proc *, spinlock_t *);
